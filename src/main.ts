@@ -8,11 +8,11 @@ await InitLogger('overwrite')
 
 const PORT = 7992
 
-const apiStatus = await TestAPI()
-if (apiStatus === APIStatus.DOWN) {
-  log.critical('API appears to be offline - Shutting down scrapper...')
-  Deno.exit(0)
-}
+// const apiStatus = await TestAPI()
+// if (apiStatus === APIStatus.DOWN) {
+//   log.critical('API appears to be offline - Shutting down scrapper...')
+//   Deno.exit(0)
+// }
 
 const app = new Application()
 
@@ -27,7 +27,6 @@ app.use(router.allowedMethods())
 
 app.addEventListener('listen', evt => {
   log.info(`Server listening on port: ${evt.port}`)
-
   // setInterval(runScrapper, 1000 * 60 * 60 * 24)
   runScrapper()
 })

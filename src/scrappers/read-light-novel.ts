@@ -109,15 +109,24 @@ class ReadLightNovelFiction extends BaseFiction {
     if (!path) throw new Error('Cannot get chapter url')
     return path
   }
-  private getRatting(): number | never {
+  private getFallbackRatting(): number | never {
     const ratting = this.i$(
+      'div.novel-right>div.novel-details>div:nth-child(4)>div.novel-detail-body'
+    )
+      .text()
+      .trim()
+    console.log(`Fallback ratting called on fiction ${this.title}`)
+    return Number(ratting)
+  }
+  private getRatting(): number | never {
+    let ratting = this.i$(
       'div.novel-right>div.novel-details>div:nth-child(5)>div.novel-detail-body'
     )
       .text()
       .trim()
-    if (!ratting) throw new Error('Cannot get ratting')
-    const rattingAsNumber = Number(ratting)
-    if (isNaN(rattingAsNumber)) throw new Error('Cannot convert ratting number')
+    let rattingAsNumber = Number(ratting)
+    if (isNaN(rattingAsNumber)) rattingAsNumber = this.getFallbackRatting()
+    if (isNaN(rattingAsNumber)) throw new Error('Cannot get ratting ')
     return rattingAsNumber
   }
   private getCover(): string | null | never {
@@ -136,6 +145,11 @@ class ReadLightNovelFiction extends BaseFiction {
     if (isNaN(viewsAsNumber)) throw new Error('Cannot get views')
     return viewsAsNumber
   }
+  private getFallbackDescription(): string {
+    console.log(`Fallback description called on fiction ${this.title}`)
+
+    return this.i$('div.book-info').text().trim()
+  }
   private getDescription(): string[] | never {
     const description: string[] = []
     this.i$('div.novel-details>div.novel-detail-item>div.novel-detail-body>p').each(
@@ -143,7 +157,8 @@ class ReadLightNovelFiction extends BaseFiction {
         description.push(this.i$(e).text().trim())
       }
     )
-    if (description.length === 0) throw new Error('Cannot get description')
+    if (description.length === 0) description.push(this.getFallbackDescription())
+    // throw new Error('Cannot get description')
     return description
   }
   private getStatus(): 'completed' | 'hiatus' | 'ongoing' | 'stub' | 'dropped' | never {

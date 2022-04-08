@@ -6,11 +6,14 @@ import { ReadLightNovel } from './read-light-novel.ts'
 import { RoyalRoad } from './royal-road.ts'
 
 export const runScrapper = async () => {
-  const royalRoad = new RoyalRoad(1)
-  await scrapeIterator(royalRoad)
+  // const royalRoad = new RoyalRoad(1)
+  // await scrapeIterator(royalRoad)
 
-  const readLightNovel = new ReadLightNovel(1)
-  await scrapeIterator(readLightNovel)
+  // const readLightNovel = new ReadLightNovel(1)
+  // await scrapeIterator(readLightNovel)
+
+  const readLightNovel = new ReadLightNovel(20)
+  await _debug(readLightNovel)
 }
 
 const scrapeIterator = async (scrapper: BaseScrapper) => {
@@ -28,12 +31,15 @@ const scrapeIterator = async (scrapper: BaseScrapper) => {
 }
 
 //** Used for development**/
-const _debug = async (scrapperC: BaseScrapper) => {
-  const iterator = await scrapperC.runIndexer()
-  const result = await iterator.next()
-  if (!result.done) {
-    const scrapeObject = result.value
-    const fiction = await scrapeObject.getFiction()
-    console.log(fiction.abbreviation)
+const _debug = async (scrapper: BaseScrapper) => {
+  for await (const fiction of scrapper.runIndexer()) {
+    try {
+      await fiction.getFiction()
+      log.info(`[Successful scrape on fiction ${fiction.title} ]`)
+      log
+    } catch (e) {
+      log.error(e)
+      Deno.exit(0)
+    }
   }
 }
