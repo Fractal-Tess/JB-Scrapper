@@ -1,0 +1,12 @@
+{
+  "imports": {
+    "/": "./",
+    "./": "./",
+    "@deps": "./deps.ts",
+    "@types": "./src/types/types.ts",
+    "@logger": "./src/logger/logger.ts",
+    "@db": "./src/db/mongodb.ts",
+    "@util": "./src/util/util.ts",
+    "@scrapper": "./src/scrappers/scrapper.ts"
+  }
+}
