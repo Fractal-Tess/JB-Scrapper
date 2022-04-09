@@ -36,7 +36,6 @@ const _debug = async (scrapper: BaseScrapper) => {
     try {
       await fiction.getFiction()
       log.info(`[Successful scrape on fiction ${fiction.title} ]`)
-      log
     } catch (e) {
       log.error(e)
       Deno.exit(0)
