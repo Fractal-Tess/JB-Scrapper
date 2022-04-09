@@ -1,55 +1,7 @@
-import { Root, Cheerio, cheerio } from '@deps'
-import { APIStatus, Fiction } from '@types'
-
-export const sleep = (count = 1): Promise<void> => {
-  return new Promise(resolve => setTimeout(resolve, count * 1000))
-}
-
-export const urlToCheery = async (
-  url: string,
-  headers: Headers = new Headers(),
-  count = 0
-): Promise<(Root & Cheerio) | never> => {
-  if (count >= 5)
-    throw new Error(`Retry count exceeded when trying to fetch resource => ${url}`)
-
-  const res = await fetch(url, {
-    headers
-  })
-
-  if (res.status === 429) {
-    // Too many requests
-    await sleep(5)
-    return await urlToCheery(url, headers, ++count)
-  } else if (res.status !== 200) {
-    throw new Error(
-      `Fetching resource => ${url} resulted in status code of ${res.status}`
-    )
-  }
-
-  const text = await res.text()
-  const $ = cheerio.load(text)
-
-  return $
-}
-
-export const sendToApi = async (fiction: Fiction): Promise<void | never> => {
-  await fetch('http://localhost:8888/api/v1/fiction', {
-    method: 'POST',
-    body: JSON.stringify(fiction)
-  })
-}
-
-export const TestAPI = async (): Promise<APIStatus> => {
-  try {
-    const res = await fetch('http://localhost:8888/api/v1/heartbeat')
-    if (res.status === 200) return APIStatus.UP
-    return APIStatus.DOWN
-  } catch (_e) {
-    // API is probably down
-    return APIStatus.DOWN
-  }
-}
+export * from './send-to-api.ts'
+export * from './sleep.ts'
+export * from './test-api.ts'
+export * from './url-to-cheery.ts'
 
 // export const imgToBuffer = async (
 //   url: string | URL,

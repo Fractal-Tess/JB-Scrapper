@@ -4,16 +4,22 @@ import { BaseScrapper } from './base-fiction.ts'
 import { sendToApi } from '@util'
 import { ReadLightNovel } from './read-light-novel.ts'
 import { RoyalRoad } from './royal-road.ts'
+import { debug } from '../main.ts'
 
 export const runScrapper = async () => {
-  // const royalRoad = new RoyalRoad(1)
-  // await scrapeIterator(royalRoad)
+  log.info('----------Starting scrapping----------')
+  if (debug) {
+    const readLightNovel = new ReadLightNovel(1)
+    await _debug(readLightNovel)
+  } else {
+    const royalRoad = new RoyalRoad(1)
+    await scrapeIterator(royalRoad)
 
-  // const readLightNovel = new ReadLightNovel(1)
-  // await scrapeIterator(readLightNovel)
+    const readLightNovel = new ReadLightNovel(1)
+    await scrapeIterator(readLightNovel)
+  }
 
-  const readLightNovel = new ReadLightNovel(20)
-  await _debug(readLightNovel)
+  log.info('----------Done scrapping----------')
 }
 
 const scrapeIterator = async (scrapper: BaseScrapper) => {

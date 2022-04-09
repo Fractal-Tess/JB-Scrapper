@@ -1,18 +1,15 @@
+import { testAPI } from '@util'
 import { InitLogger } from '@logger'
 import { Application, Router, log } from '@deps'
 import { runScrapper } from '@scrapper'
-import { TestAPI } from '@util'
-import { APIStatus } from './types/types.ts'
+
+export const debug = false
+export const API_HOST = 'http://localhost:8888'
 
 await InitLogger('overwrite')
 
+await testAPI()
 const PORT = 7992
-
-// const apiStatus = await TestAPI()
-// if (apiStatus === APIStatus.DOWN) {
-//   log.critical('API appears to be offline - Shutting down scrapper...')
-//   Deno.exit(0)
-// }
 
 const app = new Application()
 
