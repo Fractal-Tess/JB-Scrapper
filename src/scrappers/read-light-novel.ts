@@ -119,7 +119,7 @@ class ReadLightNovelFiction extends BaseFiction {
     return Number(ratting)
   }
   private getRatting(): number | never {
-    let ratting = this.i$(
+    const ratting = this.i$(
       'div.novel-right>div.novel-details>div:nth-child(5)>div.novel-detail-body'
     )
       .text()
