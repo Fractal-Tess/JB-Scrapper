@@ -1,4 +1,5 @@
-import { Fiction, FictionChapter } from '@types'
+import { log } from '@deps'
+import { ScrapeFiction, ScrapeFictionChapter } from '@types'
 
 export abstract class BaseScrapper {
   protected limit: number
@@ -8,42 +9,43 @@ export abstract class BaseScrapper {
     this.limit = limit
   }
   abstract runIndexer(): AsyncGenerator<BaseFiction, void, unknown>
+  public static scrapeChapter(
+    _chapter: ScrapeFictionChapter
+  ): Promise<ScrapeFictionChapter | never> {
+    throw new Error('Not implemented')
+  }
 }
 
 export abstract class BaseFiction {
   abstract readonly title: string
+  abstract readonly platform: string
 
-  protected defaultChapter: Omit<FictionChapter, 'scrapeUrl'> = {
-    chapterTitle: null,
-    chapterNumber: 0,
-    original_views: 0,
-    original_likes: 0,
-    jb_views: 0,
-    jb_likes: 0,
-    content: null,
-    uploadDate: null,
-    lastScrapped: new Date()
+  // deno-lint-ignore require-await
+  public static async scrapeChapter(
+    // deno-lint-ignore no-unused-vars
+    chapter: ScrapeFictionChapter
+  ): Promise<never | ScrapeFictionChapter> {
+    throw new Error(`Not implemented for current platform`)
   }
 
-  protected defaultFiction: Omit<Fiction, 'scrappedFrom' | 'fictionURL'> = {
-    title: '',
-    abbreviation: '',
-    author: '',
+  protected defaultChapter: Omit<ScrapeFictionChapter, 'scrapeURL'> = {
+    chapterTitle: null,
+    chapterNumber: 0,
+    content: null,
+    uploadDate: null
+  }
+
+  protected defaultFiction: Omit<ScrapeFiction, 'platform' | 'indexURL' | 'title'> = {
+    author: null,
     chapterCount: 0,
-    ageRating: 'unknown',
-    status: 'unknown',
+    ageRating: null,
+    status: null,
+
     cover: null,
     banner: null,
     genres: [],
 
-    original_ratting: 0,
-    original_subscribers: 0,
-    original_views: 0,
-
-    jb_ratting: 0,
-    jb_subscribers: 0,
-    jb_views: 0,
-    description: '',
+    description: null,
     warning: null,
     lastHiddenUpdate: new Date(),
     lastPublicUpdate: new Date(),
@@ -62,5 +64,11 @@ export abstract class BaseFiction {
       .toUpperCase()
     return acronym
   }
-  abstract getFiction(): Promise<Fiction | never>
+
+  abstract getFiction(): Promise<ScrapeFiction | never>
+
+  protected error(msg: string, _throw = false): void {
+    if (_throw) throw new Error(msg)
+    log.error(`[${this.title}] [${this.platform}]`, msg)
+  }
 }

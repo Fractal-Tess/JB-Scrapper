@@ -1,5 +1,3 @@
-import { Bson } from 'https://deno.land/x/mongo@v0.28.0/mod.ts'
-
 export enum APIStatus {
   DOWN,
   NotOK,
@@ -8,30 +6,16 @@ export enum APIStatus {
 
 type Asset = string | Uint8Array | null
 
-export interface Fiction {
-  _id?: Bson.ObjectId
-
+export interface ScrapeFiction {
   title: string
-  abbreviation: string | null
-  author: string
+  author: string | null
   chapterCount: number
-  ageRating: 'Everyone' | 'Teen' | 'Mature' | 'unknown'
-  status: 'completed' | 'hiatus' | 'ongoing' | 'unknown' | 'stub' | 'dropped'
-  genres: string[]
+  ageRating: 'everyone' | 'teen' | 'mature' | null
+  status: 'completed' | 'hiatus' | 'ongoing' | 'stub' | 'dropped' | null
+  genres: string[] | null
+  description: string | string[] | null
 
-  original_ratting: number
-  original_views: number
-  original_subscribers: number
-
-  jb_subscribers: number
-  jb_views: number
-  jb_ratting: number
-
-  description: string | string[]
-
-  warning: {
-    offenses: string[]
-  } | null
+  warning: string[] | null
 
   banner: Asset
   cover: Asset
@@ -39,20 +23,15 @@ export interface Fiction {
   lastPublicUpdate: Date
   lastHiddenUpdate: Date
 
-  chapters: FictionChapter[]
-  fictionURL: string
-  scrappedFrom: 'RoyalRoad' | 'ReadLightNovel'
+  chapters: ScrapeFictionChapter[]
+  indexURL: string
+  platform: 'RoyalRoad' | 'ReadLightNovel'
 }
 
-export interface FictionChapter {
+export interface ScrapeFictionChapter {
   chapterTitle: string | null
   chapterNumber: number
   content: string[] | string | null
-  original_views: number
-  original_likes: number
-  jb_likes: number
-  jb_views: number
-  lastScrapped: Date
   uploadDate: Date | null
-  scrapeUrl: string
+  scrapeURL: string
 }

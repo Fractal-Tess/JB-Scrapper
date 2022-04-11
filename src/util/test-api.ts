@@ -1,10 +1,10 @@
 import { APIStatus } from '@types'
 import { log } from '@deps'
-import { API_HOST, debug } from '../main.ts'
+import { API_HOST, test } from '../main.ts'
 
 export const testAPI = async (): Promise<void | never> => {
-  log.debug(`Starting scrapper in ${debug ? 'debug' : 'production'} mode`)
-  if (!debug) {
+  log.debug(`Starting scrapper in ${test ? 'debug' : 'production'} mode`)
+  if (!test) {
     const status = await heartbeat()
     if (status === APIStatus.UP) {
       log.info(`Successfully got an OK status from API host ${API_HOST}`)
