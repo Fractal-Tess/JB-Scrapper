@@ -53,18 +53,6 @@ export abstract class BaseFiction {
     chapters: []
   }
 
-  protected getAbbreviation(): string {
-    const acronym = this.title
-      .match(/[\p{Alpha}\p{Nd}]+/gu)!
-      .reduce(
-        (previous, next) =>
-          previous + (+next === 0 || parseInt(next) ? parseInt(next) : next[0] || ''),
-        ''
-      )
-      .toUpperCase()
-    return acronym
-  }
-
   abstract getFiction(): Promise<ScrapeFiction | never>
 
   protected error(msg: string, _throw = false): void {

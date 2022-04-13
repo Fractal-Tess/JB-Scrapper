@@ -93,7 +93,6 @@ export class RoyalFiction extends BaseFiction {
 
     this.#fiction = {
       ...this.defaultFiction,
-      abbreviation: this.getAbbreviation(),
 
       platform: this.platform,
 

@@ -126,7 +126,6 @@ export class ReadLightNovelFiction extends BaseFiction {
       ...this.defaultFiction,
 
       title: this.title,
-      abbreviation: this.getAbbreviation(),
       author: this.getAuthor(),
       description: this.getDescription(),
 
