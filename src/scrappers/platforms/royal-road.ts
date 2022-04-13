@@ -1,4 +1,4 @@
-import { ScrapeFiction, ScrapeFictionChapter } from '@types'
+import { FictionContentScrape, ScrapeFiction, ScrapeFictionChapter } from '@types'
 import { cheerio, Cheerio, Root } from '@deps'
 import { urlToCheery } from '@util'
 import { BaseFiction, BaseScrapper } from '../base-fiction.ts'
@@ -8,10 +8,7 @@ export class RoyalRoad extends BaseScrapper {
     return 'RoyalRoad'
   }
 
-  constructor(limit: number) {
-    super(limit)
-  }
-
+  // Scrape index
   async *runIndexer() {
     for (let i = 0; i < this.limit; i++) {
       const $ = await urlToCheery(
@@ -31,10 +28,12 @@ export class RoyalRoad extends BaseScrapper {
       }
     }
   }
+
+  // Scrape content
   public static override async scrapeChapter(
-    chapter: ScrapeFictionChapter
-  ): Promise<ScrapeFictionChapter | never> {
-    return await RoyalFiction.scrapeChapter(chapter)
+    scrapeURL: string
+  ): Promise<FictionContentScrape | never> {
+    return await RoyalFiction.scrapeChapter(scrapeURL)
   }
 
   private hasContent($: Cheerio & Root): boolean {
@@ -43,19 +42,19 @@ export class RoyalRoad extends BaseScrapper {
 }
 
 export class RoyalFiction extends BaseFiction {
-  private r$: Cheerio & Root
-  private i$!: Cheerio & Root
+  #r$: Cheerio & Root
+  #i$!: Cheerio & Root
   #fiction!: ScrapeFiction
   #isInitialized = false
 
   constructor($: Cheerio & Root) {
     super()
-    this.r$ = $
+    this.#r$ = $
   }
 
   // Access
   get title(): string {
-    return this.r$('div>h2>a').text().trim()
+    return this.#r$('div>h2>a').text().trim()
   }
   get platform(): ScrapeFiction['platform'] {
     return 'RoyalRoad'
@@ -67,11 +66,10 @@ export class RoyalFiction extends BaseFiction {
 
   // Chapter scraping
   public static override async scrapeChapter(
-    chapter: ScrapeFictionChapter
-  ): Promise<ScrapeFictionChapter | never> {
-    const $ = await urlToCheery(chapter.scrapeURL)
-    chapter.content = this.getChapterContent($)
-    return chapter
+    scrapeURL: string
+  ): Promise<FictionContentScrape | never> {
+    const $ = await urlToCheery(scrapeURL)
+    return { content: this.getChapterContent($) }
   }
   static getChapterContent($: Root & Cheerio): string[] | never {
     const content = $('div.chapter-inner')
@@ -89,10 +87,10 @@ export class RoyalFiction extends BaseFiction {
     if (this.#isInitialized) return
 
     const indexURL = this.getFictionUrl()
-    this.i$ = await urlToCheery(indexURL)
+    this.#i$ = await urlToCheery(indexURL)
 
     this.#fiction = {
-      ...this.defaultFiction,
+      ...BaseFiction.fictionDefaults,
 
       platform: this.platform,
 
@@ -121,10 +119,10 @@ export class RoyalFiction extends BaseFiction {
     | never {
     const chapters: ScrapeFictionChapter[] = []
     let chapterCount = 0
-    this.i$('tbody>tr.chapter-row').each((idx, e) => {
-      const c$ = this.i$(e)
+    this.#i$('tbody>tr.chapter-row').each((idx, e) => {
+      const c$ = this.#i$(e)
       const chapter: ScrapeFictionChapter = {
-        ...this.defaultChapter,
+        ...BaseFiction.chapterDefaults,
         chapterTitle: this.getChapterTitle(c$),
         uploadDate: this.getChapterUploadDate(c$),
         scrapeURL: this.getChapterUrl(c$),
@@ -159,7 +157,7 @@ export class RoyalFiction extends BaseFiction {
     return new Date(time)
   }
   private getCover(): string | null {
-    const cover = this.i$('img.thumbnail.inline-block')
+    const cover = this.#i$('img.thumbnail.inline-block')
       .attr('src')
       ?.replace('covers-full', 'covers-large')
       .replace(/\?.*/g, '')
@@ -171,7 +169,7 @@ export class RoyalFiction extends BaseFiction {
     return cover
   }
   private getDescription(): string[] | null {
-    const description = this.i$('div.description').text().trim().split('\n')
+    const description = this.#i$('div.description').text().trim().split('\n')
     if (!description) {
       this.error('Cannot get description')
       return null
@@ -179,7 +177,7 @@ export class RoyalFiction extends BaseFiction {
     return description
   }
   private getStatus(): 'completed' | 'hiatus' | 'ongoing' | 'stub' | 'dropped' | null {
-    const status = this.i$('span.label.label-default.label-sm.bg-blue-hoki')
+    const status = this.#i$('span.label.label-default.label-sm.bg-blue-hoki')
       .text()
       .trim()
       .toLocaleLowerCase()
@@ -204,8 +202,8 @@ export class RoyalFiction extends BaseFiction {
   private getWarnings(): string[] | null {
     if (this.hasWarning()) {
       let warnings: string[] = []
-      this.i$('div.text-center.font-red-sunglo>ul.list-inline').each((_, e) => {
-        warnings = this.i$(e).text().trim().replace(/ +/g, '').split('\n')
+      this.#i$('div.text-center.font-red-sunglo>ul.list-inline').each((_, e) => {
+        warnings = this.#i$(e).text().trim().replace(/ +/g, '').split('\n')
       })
       if (warnings.length === 0) {
         this.error('There was a warning, but no offenses could be extracted')
@@ -220,13 +218,13 @@ export class RoyalFiction extends BaseFiction {
     return 'everyone'
   }
   private hasWarning(): boolean {
-    const warning = this.i$('div>strong').first().text().toLocaleLowerCase()
+    const warning = this.#i$('div>strong').first().text().toLocaleLowerCase()
     return warning === 'warning'
   }
   private getGenres(): string[] | null {
     const genres: string[] = []
-    this.i$('span.tags>a').each((_, e) => {
-      genres.push(this.i$(e).text().trim())
+    this.#i$('span.tags>a').each((_, e) => {
+      genres.push(this.#i$(e).text().trim())
     })
     if (genres.length === 0) {
       this.error('Cannot get genres')
@@ -235,12 +233,12 @@ export class RoyalFiction extends BaseFiction {
     return genres
   }
   private getAuthor(): string | null {
-    const author = this.i$('h4>span>a').text().trim()
+    const author = this.#i$('h4>span>a').text().trim()
     if (!author) this.error('Cannot get author')
     return author || null
   }
   private getFictionUrl(): string | never {
-    const slug = this.r$('div>h2>a').attr('href')
+    const slug = this.#r$('div>h2>a').attr('href')
     if (!slug) this.error(`Cannot get URL to fiction`, true)
     return `https://www.royalroad.com${slug}`
   }

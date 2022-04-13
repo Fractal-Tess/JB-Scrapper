@@ -1,15 +1,11 @@
-import { ScrapeFiction, ScrapeFictionChapter } from '@types'
-import { cheerio, Cheerio, Root, Page, log } from '@deps'
+import { FictionContentScrape, ScrapeFiction, ScrapeFictionChapter } from '@types'
+import { cheerio, Cheerio, Root, log } from '@deps'
 import { urlToCheery } from '@util'
 import { BaseFiction, BaseScrapper } from '../base-fiction.ts'
 
 export class ReadLightNovel extends BaseScrapper {
   public get platform(): string {
     return 'ReadLightNovel'
-  }
-
-  constructor(limit = 999_999) {
-    super(limit)
   }
 
   // Scrape index
@@ -33,11 +29,11 @@ export class ReadLightNovel extends BaseScrapper {
     }
   }
 
-  // Scrape chapter
+  // Scrape chapter content
   public static override async scrapeChapter(
-    chapter: ScrapeFictionChapter
-  ): Promise<ScrapeFictionChapter | never> {
-    return await ReadLightNovelFiction.scrapeChapter(chapter)
+    scrapeURL: string
+  ): Promise<FictionContentScrape | never> {
+    return await ReadLightNovelFiction.scrapeChapter(scrapeURL)
   }
 
   private hasContent($: Cheerio & Root): boolean {
@@ -46,49 +42,47 @@ export class ReadLightNovel extends BaseScrapper {
 }
 
 export class ReadLightNovelFiction extends BaseFiction {
-  private r$: Cheerio & Root
-  private i$!: Cheerio & Root
-  private _fiction!: ScrapeFiction
-  private _isInitialized = false
+  #r$: Cheerio & Root
+  #i$!: Cheerio & Root
+  #fiction!: ScrapeFiction
+  #isInitialized = false
 
   constructor($: Cheerio & Root) {
     super()
-    this.r$ = $
+    this.#r$ = $
   }
 
   // Access
   get title(): string {
-    return this.r$('div.top-novel-header>h2>a').text()
+    return this.#r$('div.top-novel-header>h2>a').text()
   }
-
   get platform(): ScrapeFiction['platform'] {
     return 'ReadLightNovel'
   }
-
   async getFiction(): Promise<ScrapeFiction | never> {
-    if (!this._isInitialized) await this.Initialize()
-    return this._fiction
+    if (!this.#isInitialized) await this.Initialize()
+    return this.#fiction
   }
 
+  // Chapter scrapping
   public static override async scrapeChapter(
-    chapter: ScrapeFictionChapter
-  ): Promise<ScrapeFictionChapter | never> {
-    const $ = await urlToCheery(chapter.scrapeURL)
-
-    chapter.uploadDate = this.getChapterUploadDate($)
-    chapter.content = this.getChapterContent($)
-    chapter.chapterTitle = this.getChapterTitle(chapter.content)
-    return chapter
+    scrapeURL: string
+  ): Promise<FictionContentScrape | never> {
+    const $ = await urlToCheery(scrapeURL)
+    return {
+      ...this.chapterDefaults,
+      chapterTitle: this.getChapterTitle($),
+      content: this.getChapterContent($),
+      uploadDate: this.getChapterUploadDate($)
+    }
   }
-
-  private static getChapterTitle(content: string[]): string | null | never {
+  private static getChapterTitle($: Cheerio & Root): string | null | never {
+    const content = this.getChapterContent($)
     const title = content.find(e => /^chapter /gi.test(e))
     if (!title) throw new Error('Cannot get title')
     return title.replace(/chapter .\d*(: | – )?/gi, '') || null
   }
-
-  // Chapter scrapping
-  private static getChapterContent($: Root & Cheerio): string[] | never {
+  private static getChapterContent($: Root & Cheerio): string[] {
     const content = $('div.chapter-content3>div.desc')
       .text()
       .replace(/If audio player doesn't work, press Stop then Play button again/gi, '')
@@ -97,7 +91,7 @@ export class ReadLightNovelFiction extends BaseFiction {
       .split('\n')
       .map(e => e.trim())
       .filter(e => e != '')
-    if (content.length === 0) throw new Error('Cannot get content of chapter')
+    if (content.length === 0) throw new Error('Cannot get content')
     return content
   }
   private static getChapterUploadDate($: Cheerio & Root): Date | never {
@@ -117,13 +111,13 @@ export class ReadLightNovelFiction extends BaseFiction {
 
   // Indexing scrapping
   private async Initialize(): Promise<void | never> {
-    if (this._isInitialized) return
+    if (this.#isInitialized) return
 
     const indexURL = this.getFictionUrl()
-    this.i$ = await urlToCheery(indexURL)
+    this.#i$ = await urlToCheery(indexURL)
 
-    this._fiction = {
-      ...this.defaultFiction,
+    this.#fiction = {
+      ...BaseFiction.fictionDefaults,
 
       title: this.title,
       author: this.getAuthor(),
@@ -135,22 +129,22 @@ export class ReadLightNovelFiction extends BaseFiction {
       genres: this.getGenres(),
       indexURL,
 
-      platform: 'ReadLightNovel',
+      platform: this.platform,
 
       ...this.getChapters()
     }
 
-    this._isInitialized = true
+    this.#isInitialized = true
   }
   private getChapters():
     | { chapters: ScrapeFictionChapter[]; chapterCount: number }
     | never {
     const chapters: ScrapeFictionChapter[] = []
     let chapterCount = 0
-    this.i$('div.tab-content>div>ul.chapter-chs>li').each((idx, e) => {
-      const c$ = this.i$(e)
+    this.#i$('div.tab-content>div>ul.chapter-chs>li').each((idx, e) => {
+      const c$ = this.#i$(e)
       const chapter: ScrapeFictionChapter = {
-        ...this.defaultChapter,
+        ...BaseFiction.chapterDefaults,
         scrapeURL: this.getChapterUrl(c$),
         chapterNumber: idx + 1
       }
@@ -166,7 +160,7 @@ export class ReadLightNovelFiction extends BaseFiction {
     return `${path}`
   }
   private getCover(): string | null {
-    const cover = this.i$('div.novel-cover>a>img').attr('src')
+    const cover = this.#i$('div.novel-cover>a>img').attr('src')
     if (!cover) {
       this.error('Cannot get cover')
       return null
@@ -176,15 +170,16 @@ export class ReadLightNovelFiction extends BaseFiction {
   }
   private getDescription(): string[] | null {
     const description: string[] = []
-    this.i$('div.novel-details>div.novel-detail-item>div.novel-detail-body>p').each(
+    this.#i$('div.novel-details>div.novel-detail-item>div.novel-detail-body>p').each(
       (_, e) => {
-        description.push(this.i$(e).text().trim())
+        description.push(this.#i$(e).text().trim())
       }
     )
-    if (description.length === 0) description.push(this.i$('div.book-info').text().trim())
+    if (description.length === 0)
+      description.push(this.#i$('div.book-info').text().trim())
     if (description.length === 0) {
       description.push(
-        this.i$(
+        this.#i$(
           'div.novel-details>div.novel-detail-item>div.novel-detail-body>pre'
         ).text()
       )
@@ -198,7 +193,7 @@ export class ReadLightNovelFiction extends BaseFiction {
     return description
   }
   private getStatus(): 'completed' | 'hiatus' | 'ongoing' | 'stub' | 'dropped' | null {
-    const status = this.r$('div.novel-item:nth-child(3)>div.content>a')
+    const status = this.#r$('div.novel-item:nth-child(3)>div.content>a')
       .text()
       .trim()
       .toLocaleLowerCase()
@@ -220,8 +215,8 @@ export class ReadLightNovelFiction extends BaseFiction {
   }
   private getGenres(): string[] | null {
     const genres: string[] = []
-    this.r$('div.content>ul>li>a').each((_, e) => {
-      genres.push(this.r$(e).attr('title')!.trim().toLocaleLowerCase())
+    this.#r$('div.content>ul>li>a').each((_, e) => {
+      genres.push(this.#r$(e).attr('title')!.trim().toLocaleLowerCase())
     })
     if (genres.length === 0) {
       this.error('Cannot get genres')
@@ -230,12 +225,12 @@ export class ReadLightNovelFiction extends BaseFiction {
     return genres
   }
   private getAuthor(): string | null {
-    const author = this.r$('div.novel-item>div.content>a').first().text().trim()
+    const author = this.#r$('div.novel-item>div.content>a').first().text().trim()
     if (!author) log.error(`Cannot get author`)
     return author || null
   }
   private getFictionUrl(): string | never {
-    const url = this.r$('div.top-novel-header>h2>a').attr('href')
+    const url = this.#r$('div.top-novel-header>h2>a').attr('href')
     if (!url) this.error(`Cannot get URL to fiction`, true)
     return `${url}`
   }
