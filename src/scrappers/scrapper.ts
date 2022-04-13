@@ -8,18 +8,18 @@ import type { ScrapeFiction, ScrapeFictionChapter } from '@types'
 
 export const runScrapper = async () => {
   log.info('----------Starting scrapping----------')
-  // if (test) {
-  //   log.info('Test mode enabled')
-  //   const rln = new ReadLightNovel(10)
-  //   const rr = new RoyalRoad(10)
-  //   await Promise.all([test1(rln), test1(rr)])
-  //   await Promise.all([test2(rln), test2(rr)])
-  //   log.critical('Test passed')
-  // } else {
-  //   const royalRoad = new RoyalRoad(1)
-  //   const readLightNovel = new ReadLightNovel(1)
-  //   await Promise.all([scrapeIterator(royalRoad), scrapeIterator(readLightNovel)])
-  // }
+  if (test) {
+    log.info('Test mode enabled')
+    const rln = new ReadLightNovel(10)
+    const rr = new RoyalRoad(10)
+    await Promise.all([test1(rln), test1(rr)])
+    await Promise.all([test2(rln), test2(rr)])
+    log.critical('Test passed')
+  } else {
+    const royalRoad = new RoyalRoad()
+    const readLightNovel = new ReadLightNovel()
+    await Promise.all([scrapeIterator(royalRoad), scrapeIterator(readLightNovel)])
+  }
 
   log.info('----------Done scrapping----------')
 }

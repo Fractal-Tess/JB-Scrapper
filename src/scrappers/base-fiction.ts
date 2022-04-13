@@ -5,7 +5,7 @@ export abstract class BaseScrapper {
   protected limit: number
   abstract readonly platform: string
 
-  constructor(limit: number) {
+  constructor(limit = 999_999) {
     this.limit = limit
   }
   abstract runIndexer(): AsyncGenerator<BaseFiction, void, unknown>
