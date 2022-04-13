@@ -29,9 +29,6 @@ export interface ScrapeFiction {
   banner: Asset
   cover: Asset
 
-  lastPublicUpdate: Date
-  lastHiddenUpdate: Date
-
   chapters: ScrapeFictionChapter[]
   indexURL: string
   platform: 'RoyalRoad' | 'ReadLightNovel'

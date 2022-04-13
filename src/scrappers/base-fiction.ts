@@ -48,9 +48,6 @@ export abstract class BaseFiction {
 
     description: null,
     warning: null,
-    lastHiddenUpdate: new Date(),
-    lastPublicUpdate: new Date(),
-
     chapters: []
   }
 
