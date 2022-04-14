@@ -26,9 +26,11 @@ export abstract class BaseFiction {
     throw new Error(`Not implemented for current platform`)
   }
 
-  protected static chapterDefaults: Omit<ScrapeFictionChapter, 'scrapeURL'> = {
+  protected static chapterDefaults: Omit<
+    ScrapeFictionChapter,
+    'scrapeURL' | 'chapterNumber'
+  > = {
     chapterTitle: null,
-    chapterNumber: 0,
     content: null,
     uploadDate: null
   }

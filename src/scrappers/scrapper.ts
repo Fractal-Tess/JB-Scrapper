@@ -16,9 +16,11 @@ export const runScrapper = async () => {
     await Promise.all([test2(rln), test2(rr)])
     log.critical('Test passed')
   } else {
-    const royalRoad = new RoyalRoad()
-    const readLightNovel = new ReadLightNovel()
-    await Promise.all([scrapeIterator(royalRoad), scrapeIterator(readLightNovel)])
+    // const royalRoad = new RoyalRoad()
+    // const readLightNovel = new ReadLightNovel()
+    // await Promise.all([scrapeIterator(royalRoad), scrapeIterator(readLightNovel)])
+    const royalRoad = new ReadLightNovel()
+    await scrapeIterator(royalRoad)
   }
 
   log.info('----------Done scrapping----------')
